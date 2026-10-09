@@ -35,11 +35,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onNavigateHome,
 }) => {
   const { user, isAdmin, showToast } = useAuth();
-  const [activeTab, setActiveTab] = useState<'pending' | 'properties' | 'reports' | 'users'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'properties' | 'landlords' | 'reports' | 'users'>('pending');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [reports, setReports] = useState<PropertyReport[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [landlords, setLandlords] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -47,23 +48,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Rejection modal
+  // Rejection modals
   const [rejectingProp, setRejectingProp] = useState<Property | null>(null);
   const [rejectionReason, setRejectionReason] = useState('Photos do not clearly show the room interior');
+
+  const [rejectingLandlord, setRejectingLandlord] = useState<User | null>(null);
+  const [landlordRejectionReason, setLandlordRejectionReason] = useState('Please provide a valid Nepali phone number and verified property ownership documentation.');
 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [s, props, rep, usr] = await Promise.all([
+      const [s, props, rep, usr, lnds] = await Promise.all([
         api.getAdminStats(),
         api.getAdminProperties(),
         api.getAdminReports(),
         api.getAdminUsers(),
+        api.getAdminLandlords(),
       ]);
       setStats(s);
       setProperties(props);
       setReports(rep);
       setUsers(usr);
+      setLandlords(lnds);
     } catch (err: any) {
       showToast(err.message || 'Failed to fetch admin data', 'error');
     } finally {
@@ -130,6 +136,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       showToast('Property listing rejected. Reason sent to landlord.');
     } catch (err: any) {
       showToast(err.message || 'Failed to reject listing', 'error');
+    }
+  };
+
+  const handleApproveLandlord = async (landlordId: string) => {
+    try {
+      await api.approveLandlord(landlordId);
+      setLandlords(prev => prev.map(l => l.id === landlordId ? { ...l, landlordStatus: 'approved' } : l));
+      showToast('Landlord verified & approved. They can now publish listings.');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to approve landlord', 'error');
+    }
+  };
+
+  const handleConfirmRejectLandlord = async () => {
+    if (!rejectingLandlord) return;
+    if (!landlordRejectionReason.trim()) {
+      showToast('Please provide a reason for rejecting the landlord application.', 'error');
+      return;
+    }
+    try {
+      await api.rejectLandlord(rejectingLandlord.id, landlordRejectionReason.trim());
+      setLandlords(prev => prev.map(l => l.id === rejectingLandlord.id ? { ...l, landlordStatus: 'rejected', landlordRejectionReason: landlordRejectionReason.trim() } : l));
+      showToast('Landlord application rejected with feedback.');
+      setRejectingLandlord(null);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to reject landlord application', 'error');
     }
   };
 
@@ -279,6 +311,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         >
           <Building2 className="w-4 h-4" />
           <span>All Properties ({properties.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('landlords')}
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+            activeTab === 'landlords'
+              ? 'border-slate-900 text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <UserCheck className="w-4 h-4 text-emerald-600" />
+          <span>Landlord Applications ({landlords.filter(l => l.landlordStatus === 'pending').length} pending)</span>
         </button>
 
         <button
@@ -686,6 +730,164 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: LANDLORD APPLICATIONS */}
+      {activeTab === 'landlords' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-emerald-600" />
+                  <span>Landlord & Homeowner Applications ({landlords.length})</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Verify landlords before they can publish active rooms and flats across Kathmandu, Pokhara, and Nepal.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 rounded-lg">
+                  {landlords.filter(l => l.landlordStatus === 'pending').length} Pending
+                </span>
+                <span className="px-2.5 py-1 text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg">
+                  {landlords.filter(l => l.landlordStatus === 'approved').length} Approved
+                </span>
+                <span className="px-2.5 py-1 text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200 rounded-lg">
+                  {landlords.filter(l => l.landlordStatus === 'rejected').length} Rejected
+                </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Landlord Name & Email</th>
+                    <th className="px-5 py-3">Phone</th>
+                    <th className="px-5 py-3">Properties</th>
+                    <th className="px-5 py-3">Verification Status</th>
+                    <th className="px-5 py-3">Feedback / Notes</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {landlords.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-8 text-center text-slate-500">
+                        No landlord applications recorded.
+                      </td>
+                    </tr>
+                  ) : (
+                    landlords.map((l) => (
+                      <tr key={l.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-5 py-3">
+                          <div className="font-bold text-slate-900">{l.name}</div>
+                          <div className="text-slate-500">{l.email}</div>
+                        </td>
+                        <td className="px-5 py-3 font-mono">{l.phone || '—'}</td>
+                        <td className="px-5 py-3 font-mono">{(l as any).propertiesCount ?? 0} listings</td>
+                        <td className="px-5 py-3">
+                          <span
+                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                              l.landlordStatus === 'approved'
+                                ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                                : l.landlordStatus === 'rejected'
+                                ? 'bg-rose-100 text-rose-900 border border-rose-200'
+                                : 'bg-amber-100 text-amber-900 border border-amber-200'
+                            }`}
+                          >
+                            {l.landlordStatus || 'pending'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 max-w-xs text-slate-600">
+                          {l.landlordRejectionReason ? (
+                            <span className="text-rose-700 font-medium">"{l.landlordRejectionReason}"</span>
+                          ) : (
+                            <span className="text-slate-400 italic">None</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3 text-right space-x-2 whitespace-nowrap">
+                          {l.landlordStatus !== 'approved' && (
+                            <button
+                              onClick={() => handleApproveLandlord(l.id)}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {l.landlordStatus !== 'rejected' && (
+                            <button
+                              onClick={() => {
+                                setRejectingLandlord(l);
+                                setLandlordRejectionReason('Please provide a valid Nepali phone number and verified property ownership documentation.');
+                              }}
+                              className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                          )}
+                          {l.landlordStatus === 'approved' && (
+                            <span className="text-xs text-emerald-700 font-semibold inline-flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Verified Landlord</span>
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Landlord Rejection Modal */}
+      {rejectingLandlord && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 border border-slate-200 shadow-2xl space-y-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Reject Landlord Application: {rejectingLandlord.name}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Provide clear reason and guidance so <strong>{rejectingLandlord.name}</strong> can correct and resubmit.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Reason for Application Rejection *
+              </label>
+              <textarea
+                rows={3}
+                required
+                value={landlordRejectionReason}
+                onChange={(e) => setLandlordRejectionReason(e.target.value)}
+                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setRejectingLandlord(null)}
+                className="px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRejectLandlord}
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-xs cursor-pointer"
+              >
+                Confirm Rejection
+              </button>
+            </div>
           </div>
         </div>
       )}

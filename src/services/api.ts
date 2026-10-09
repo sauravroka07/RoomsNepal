@@ -232,6 +232,67 @@ export const api = {
     return data.inquiry;
   },
 
+  // Viewing Requests
+  async getViewings(userId: string, role: 'tenant' | 'landlord'): Promise<any[]> {
+    const res = await fetch(`/api/viewings?userId=${encodeURIComponent(userId)}&role=${role}`);
+    if (res.ok) {
+      const data = await res.json();
+      return data.viewings || [];
+    }
+    return [];
+  },
+
+  async createViewing(viewingData: {
+    propertyId: string;
+    tenantId: string;
+    tenantName: string;
+    tenantEmail: string;
+    tenantPhone: string;
+    preferredDate: string;
+    preferredTimeSlot: string;
+    notes?: string;
+  }): Promise<any> {
+    const res = await fetch('/api/viewings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(viewingData)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to request inspection visit');
+    }
+    const data = await res.json();
+    return data.viewing;
+  },
+
+  async updateViewingStatus(id: string, status: string, landlordNotes?: string, requestUserId?: string): Promise<any> {
+    const res = await fetch(`/api/viewings/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, landlordNotes, requestUserId })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to update inspection visit status');
+    }
+    const data = await res.json();
+    return data.viewing;
+  },
+
+  // Landlord Application Resubmission
+  async resubmitLandlordApplication(landlordId: string): Promise<User> {
+    const res = await fetch(`/api/landlords/${landlordId}/resubmit`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to resubmit landlord application');
+    }
+    const data = await res.json();
+    return data.landlord;
+  },
+
   // Saved Properties
   async getSavedProperties(userId: string): Promise<{ properties: Property[]; savedIds: string[] }> {
     const res = await fetch(`/api/saved?userId=${encodeURIComponent(userId)}`);
@@ -371,6 +432,45 @@ export const api = {
     }
     const data = await res.json();
     return data.user;
+  },
+
+  async getAdminLandlords(): Promise<User[]> {
+    const res = await fetch('/api/admin/landlords', {
+      headers: { ...getAdminAuthHeader() }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to load landlord applications');
+    }
+    const data = await res.json();
+    return data.landlords;
+  },
+
+  async approveLandlord(landlordId: string): Promise<User> {
+    const res = await fetch(`/api/admin/landlords/${landlordId}/approve`, {
+      method: 'PATCH',
+      headers: { ...getAdminAuthHeader(), 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to approve landlord');
+    }
+    const data = await res.json();
+    return data.landlord;
+  },
+
+  async rejectLandlord(landlordId: string, rejectionReason: string): Promise<User> {
+    const res = await fetch(`/api/admin/landlords/${landlordId}/reject`, {
+      method: 'PATCH',
+      headers: { ...getAdminAuthHeader(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rejectionReason })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to reject landlord');
+    }
+    const data = await res.json();
+    return data.landlord;
   },
 
   async getAdminReports(): Promise<PropertyReport[]> {

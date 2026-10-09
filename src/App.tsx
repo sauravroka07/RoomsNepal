@@ -8,6 +8,7 @@ import { PropertyDetailPage } from './pages/PropertyDetailPage';
 import { LandlordDashboard } from './pages/LandlordDashboard';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { StaffLoginPage } from './pages/StaffLoginPage';
 import { AuthModal } from './pages/AuthModal';
 import { PropertyFormModal } from './components/PropertyFormModal';
 import { SathiAiChat } from './components/SathiAiChat';
@@ -15,8 +16,8 @@ import { Property, FilterState, UserRole } from './types';
 import { api } from './services/api';
 
 function AppContent() {
-  const { user } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'browse' | 'property' | 'landlord-dashboard' | 'tenant-dashboard' | 'admin-dashboard'>('home');
+  const { user, isAdmin } = useAuth();
+  const [currentView, setCurrentView] = useState<'home' | 'browse' | 'property' | 'landlord-dashboard' | 'tenant-dashboard' | 'admin-dashboard' | 'staff-login'>('home');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [browseFilters, setBrowseFilters] = useState<Partial<FilterState>>({});
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
@@ -40,10 +41,43 @@ function AppContent() {
     loadFeatured();
   }, []);
 
-  // Listen to hash changes for deep linking (e.g. #/property/prop-ktm-01)
+  // Listen to pathname & hash changes for direct URL loading and deep linking
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleUrlChange = () => {
+      const pathname = window.location.pathname.toLowerCase();
       const hash = window.location.hash;
+
+      // 1. Direct pathname inspection (e.g. /staff-login, /browse, /admin)
+      if (pathname === '/staff-login' || pathname === '/staff' || hash === '#/staff-login' || hash === '#/staff') {
+        setCurrentView('staff-login');
+        return;
+      }
+      if (pathname === '/admin' || pathname === '/admin-dashboard' || hash === '#/admin') {
+        setCurrentView('admin-dashboard');
+        return;
+      }
+      if (pathname === '/landlord' || pathname === '/landlord-dashboard' || hash === '#/landlord') {
+        setCurrentView('landlord-dashboard');
+        return;
+      }
+      if (pathname === '/tenant' || pathname === '/tenant-dashboard' || hash === '#/tenant') {
+        setCurrentView('tenant-dashboard');
+        return;
+      }
+      if (pathname === '/browse' || hash === '#/browse') {
+        setCurrentView('browse');
+        return;
+      }
+      if (pathname.startsWith('/property/')) {
+        const id = pathname.replace('/property/', '');
+        if (id) {
+          setSelectedPropertyId(id);
+          setCurrentView('property');
+          return;
+        }
+      }
+
+      // 2. Hash routing inspection
       if (hash.startsWith('#/property/')) {
         const id = hash.replace('#/property/', '');
         if (id) {
@@ -58,14 +92,18 @@ function AppContent() {
         setCurrentView('tenant-dashboard');
       } else if (hash === '#/admin') {
         setCurrentView('admin-dashboard');
-      } else if (hash === '#/' || hash === '') {
+      } else if (hash === '#/' || hash === '' || pathname === '/') {
         setCurrentView('home');
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleUrlChange();
+    window.addEventListener('hashchange', handleUrlChange);
+    window.addEventListener('popstate', handleUrlChange);
+    return () => {
+      window.removeEventListener('hashchange', handleUrlChange);
+      window.removeEventListener('popstate', handleUrlChange);
+    };
   }, []);
 
   const handleNavigate = (view: string, params?: any) => {
@@ -101,8 +139,16 @@ function AppContent() {
         setCurrentView('tenant-dashboard');
       }
     } else if (view === 'admin-dashboard') {
-      window.location.hash = '#/admin';
-      setCurrentView('admin-dashboard');
+      if (!isAdmin) {
+        window.location.hash = '#/staff-login';
+        setCurrentView('staff-login');
+      } else {
+        window.location.hash = '#/admin';
+        setCurrentView('admin-dashboard');
+      }
+    } else if (view === 'staff-login') {
+      window.location.hash = '#/staff-login';
+      setCurrentView('staff-login');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -192,12 +238,19 @@ function AppContent() {
             onNavigateHome={() => handleNavigate('home')}
           />
         )}
+
+        {currentView === 'staff-login' && (
+          <StaffLoginPage
+            onSuccess={() => handleNavigate('admin-dashboard')}
+            onNavigateHome={() => handleNavigate('home')}
+          />
+        )}
       </main>
 
       {/* Footer */}
       <Footer
         onNavigate={handleNavigate}
-        onOpenStaffAuth={() => handleOpenAuth('admin')}
+        onOpenStaffAuth={() => handleNavigate('staff-login')}
       />
 
       {/* Auth Modal */}

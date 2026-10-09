@@ -27,6 +27,7 @@ import {
 import { Property } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { InquiryModal } from '../components/InquiryModal';
+import { ViewingModal } from '../components/ViewingModal';
 import { ReportModal } from '../components/ReportModal';
 import { PropertyCard } from '../components/PropertyCard';
 import { api } from '../services/api';
@@ -49,6 +50,7 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   const [relatedProperties, setRelatedProperties] = useState<Property[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [inquiryModalOpen, setInquiryModalOpen] = useState(false);
+  const [viewingModalOpen, setViewingModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -101,9 +103,11 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   if (!property) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-4">
-        <h2 className="text-xl font-bold text-slate-900">Property Not Available</h2>
+        <h2 className="text-xl font-bold text-slate-900">
+          No properties available yet. Check back soon as landlords add their listings.
+        </h2>
         <p className="text-xs text-slate-500">
-          This listing may be under review or has been unlisted.
+          This listing is not available for public viewing or is demonstration data.
         </p>
         <button
           onClick={onBack}
@@ -160,12 +164,6 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
   const directionsUrl = hasLocation
     ? `https://www.google.com/maps/dir/?api=1&destination=${mapLat},${mapLng}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.fullAddress)}`;
-
-  // WhatsApp link (format: +977 9766602378)
-  const rawWhatsApp = property.whatsappPhone || property.ownerPhone || '9766602378';
-  const cleanPhone = rawWhatsApp.replace(/\D/g, '');
-  const nepPhone = cleanPhone.startsWith('977') ? cleanPhone : `977${cleanPhone}`;
-  const whatsappUrl = `https://wa.me/${nepPhone}?text=${encodeURIComponent(`Namaste, I am inquiring about your listing: ${property.title} on RoomsNepal.`)}`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -445,19 +443,34 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
               </a>
             </div>
 
-            {/* Embedded Google Map Preview */}
-            <div className="w-full h-72 rounded-2xl overflow-hidden border border-slate-200 shadow-xs relative bg-slate-100">
-              <iframe
-                title={`Map of ${property.title}`}
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                scrolling="no"
-                marginHeight={0}
-                marginWidth={0}
-                src={`https://www.google.com/maps?q=${mapLat},${mapLng}&hl=en&z=15&output=embed`}
-                className="w-full h-full border-0"
-              />
+            {/* Location & Map Preview */}
+            <div className="w-full rounded-2xl overflow-hidden border border-slate-200 shadow-xs relative bg-slate-100">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    <strong>Coordinates:</strong> {mapLat.toFixed(4)}° N, {mapLng.toFixed(4)}° E
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  Interactive Google Maps API: Awaiting platform key configuration
+                </div>
+              </div>
+
+              <div className="w-full h-64 relative bg-slate-100 flex flex-col items-center justify-center p-6 text-center">
+                <iframe
+                  title={`Map of ${property.title}`}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  scrolling="no"
+                  marginHeight={0}
+                  marginWidth={0}
+                  src={`https://www.google.com/maps?q=${mapLat},${mapLng}&hl=en&z=15&output=embed`}
+                  className="w-full h-full border-0 absolute inset-0 opacity-80"
+                />
+                <div className="absolute inset-0 bg-slate-900/10 pointer-events-none" />
+              </div>
             </div>
           </div>
         </div>
@@ -495,42 +508,31 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   )}
                 </div>
-                <span className="text-[10px] text-slate-500 block">Property Owner / Landlord</span>
-                <span className="text-[11px] font-mono font-medium text-slate-900">
-                  {property.ownerPhone}
+                <span className="text-[10px] text-slate-500 block">Verified Property Owner / Landlord</span>
+                <span className="text-[11px] text-emerald-700 font-semibold block mt-0.5">
+                  Contact via RoomsNepal Form
                 </span>
               </div>
             </div>
 
-            {/* Direct Contact Buttons (Phone & WhatsApp) */}
-            <div className="grid grid-cols-2 gap-2">
-              <a
-                href={`tel:${property.ownerPhone}`}
-                className="py-2.5 px-3 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+            {/* Contact Actions (Send Inquiry & Schedule Inspection Visit) */}
+            <div className="space-y-2">
+              <button
+                onClick={() => setInquiryModalOpen(true)}
+                className="w-full py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Phone className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Call Owner</span>
-              </a>
+                <Mail className="w-4 h-4 text-emerald-400" />
+                <span>Contact Landlord / Send Inquiry</span>
+              </button>
 
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-2.5 px-3 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+              <button
+                onClick={() => setViewingModalOpen(true)}
+                className="w-full py-2.5 text-xs font-bold text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>WhatsApp</span>
-              </a>
+                <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Schedule Inspection Visit (NPT)</span>
+              </button>
             </div>
-
-            {/* Schedule Visit Modal Button */}
-            <button
-              onClick={() => setInquiryModalOpen(true)}
-              className="w-full py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Calendar className="w-4 h-4 text-emerald-400" />
-              <span>Schedule Inspection Visit</span>
-            </button>
 
             {/* Quick Contact Form */}
             <div className="pt-2 border-t border-slate-100 space-y-3">
@@ -617,6 +619,13 @@ export const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({
         property={property}
         isOpen={inquiryModalOpen}
         onClose={() => setInquiryModalOpen(false)}
+      />
+
+      {/* Viewing / Inspection Visit Modal */}
+      <ViewingModal
+        property={property}
+        isOpen={viewingModalOpen}
+        onClose={() => setViewingModalOpen(false)}
       />
 
       {/* Report Modal */}

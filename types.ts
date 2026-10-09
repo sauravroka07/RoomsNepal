@@ -31,10 +31,10 @@ export interface Property {
   images: string[];
   coverPhotoIndex?: number;
   isAvailable: boolean;
-  status: 'available' | 'rented';
+  status: 'available' | 'rented' | 'suspended';
   approvalStatus: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
-  isVerified: boolean;
+  isVerified?: boolean;
   isSample: boolean;
   availableFrom: string;
   createdAt: string;
@@ -49,6 +49,9 @@ export interface User {
   phone?: string;
   createdAt: string;
   status: 'active' | 'suspended';
+  landlordStatus?: 'pending' | 'approved' | 'rejected';
+  landlordRejectionReason?: string;
+  landlordApplicationDate?: string;
   passwordHash?: string;
   passwordSalt?: string;
 }
@@ -68,6 +71,28 @@ export interface Inquiry {
   message: string;
   status: 'pending' | 'contacted' | 'rejected' | 'closed';
   createdAt: string;
+}
+
+export type ViewingStatus = 'pending' | 'confirmed' | 'declined' | 'rescheduled';
+
+export interface ViewingRequest {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyCity: string;
+  propertyRent?: number;
+  landlordId: string;
+  tenantId: string;
+  tenantName: string;
+  tenantEmail: string;
+  tenantPhone: string;
+  preferredDate: string;
+  preferredTimeSlot: string;
+  notes?: string;
+  status: ViewingStatus;
+  landlordNotes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PropertyReport {
@@ -100,37 +125,34 @@ export interface FilterState {
   limit: number;
 }
 
-export interface SavedProperty {
-  userId: string;
-  propertyId: string;
-  savedAt: string;
-}
-
 export interface AdminStats {
   totalUsers: number;
   landlordsCount: number;
   tenantsCount: number;
+  pendingLandlords: number;
+  approvedLandlords: number;
   totalProperties: number;
   pendingProperties: number;
   approvedProperties: number;
   rejectedProperties: number;
+  suspendedProperties: number;
   totalInquiries: number;
+  totalViewings: number;
   totalReports: number;
   pendingReports: number;
 }
 
 export interface PlatformInfo {
-  appName: string;
   creator: string;
   supportEmail: string;
-  supportPhone: string;
-  whatsappUrl: string;
-  country: string;
+  currency: string;
+  version: string;
 }
 
 export interface AIChatResponse {
   reply: string;
-  suggestedQueries: string[];
+  suggestedQueries?: string[];
+  configured?: boolean;
 }
 
 export interface AIEnhanceListingResponse {

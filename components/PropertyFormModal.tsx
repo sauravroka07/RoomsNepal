@@ -130,7 +130,7 @@ export function PropertyFormModal({ isOpen, onClose, onSuccess }: PropertyFormMo
         securityDepositNPR: res.suggestedRentNPR ? String(res.suggestedRentNPR) : prev.securityDepositNPR,
       }));
       if (res.recommendedAmenities) {
-        const newAmenities = res.recommendedAmenities.filter((a) => !amenities.includes(a));
+        const newAmenities = res.recommendedAmenities.filter((a: string) => !amenities.includes(a));
         if (newAmenities.length > 0) {
           setAmenities((prev) => [...prev, ...newAmenities]);
         }

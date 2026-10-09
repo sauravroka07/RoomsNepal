@@ -399,28 +399,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
               </p>
             ) : mode === 'login' ? (
-              <>
-                <p>
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => switchMode('register')}
-                    className="font-semibold text-emerald-700 hover:underline"
-                  >
-                    Create one free
-                  </button>
-                </p>
-                <p className="pt-1 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => switchMode('admin')}
-                    className="text-[11px] text-purple-700 font-medium hover:underline flex items-center justify-center gap-1 mx-auto"
-                  >
-                    <Shield className="w-3 h-3" />
-                    <span>Staff / Admin Sign In</span>
-                  </button>
-                </p>
-              </>
+              <p>
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => switchMode('register')}
+                  className="font-semibold text-emerald-700 hover:underline"
+                >
+                  Create one free
+                </button>
+              </p>
             ) : (
               <p>
                 Already have an account?{' '}

@@ -8,6 +8,9 @@ export interface User {
   phone?: string;
   createdAt: string;
   status?: 'active' | 'suspended';
+  landlordStatus?: 'pending' | 'approved' | 'rejected';
+  landlordRejectionReason?: string;
+  landlordApplicationDate?: string;
 }
 
 export type PropertyCity = 'Kathmandu' | 'Lalitpur' | 'Bhaktapur' | 'Pokhara' | string;
@@ -56,7 +59,7 @@ export interface Property {
   images: string[];
   coverPhotoIndex?: number;
   isAvailable: boolean;
-  status: 'available' | 'rented';
+  status: 'available' | 'rented' | 'suspended';
   approvalStatus: PropertyApprovalStatus;
   rejectionReason?: string;
   resubmitForApproval?: boolean;
@@ -84,6 +87,28 @@ export interface Inquiry {
   message: string;
   status: InquiryStatus;
   createdAt: string;
+}
+
+export type ViewingStatus = 'pending' | 'confirmed' | 'declined' | 'rescheduled';
+
+export interface ViewingRequest {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyCity: string;
+  propertyRent?: number;
+  landlordId: string;
+  tenantId: string;
+  tenantName: string;
+  tenantEmail: string;
+  tenantPhone: string;
+  preferredDate: string;
+  preferredTimeSlot: string;
+  notes?: string;
+  status: ViewingStatus;
+  landlordNotes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type ReportReason =
@@ -126,11 +151,15 @@ export interface AdminStats {
   totalUsers: number;
   landlordsCount: number;
   tenantsCount: number;
+  pendingLandlords: number;
+  approvedLandlords: number;
   totalProperties: number;
   pendingProperties: number;
   approvedProperties: number;
   rejectedProperties: number;
+  suspendedProperties: number;
   totalInquiries: number;
+  totalViewings: number;
   totalReports: number;
   pendingReports: number;
 }

@@ -1,6 +1,38 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function() {
+        try {
+          var _origFetch = window.fetch;
+          var _boundFetch = _origFetch ? _origFetch.bind(window) : undefined;
+          var _currentFetch = _boundFetch;
+          Object.defineProperty(window, 'fetch', {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+              return _currentFetch;
+            },
+            set: function(val) {
+              _currentFetch = val;
+            }
+          });
+        } catch (e) {
+          // ignore if already defined
+        }
+
+        window.addEventListener('error', function(event) {
+          if (
+            (event && event.message && event.message.indexOf('Cannot set property fetch') !== -1) ||
+            (event && event.filename && event.filename.indexOf('chrome-extension://') !== -1)
+          ) {
+            if (event.preventDefault) event.preventDefault();
+            if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RoomsNepal - Room & Flat Rental Nepal</title>
@@ -15,7 +47,7 @@
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased font-sans">
     <div id="root"></div>
-    <script type="module" src="/main.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
 

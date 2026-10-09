@@ -30,13 +30,16 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
   onOpenAddModal,
 }) => {
   const { user, showToast } = useAuth();
-  const [activeTab, setActiveTab] = useState<'listings' | 'inquiries'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'inquiries' | 'viewings'>('listings');
   const [properties, setProperties] = useState<Property[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [viewings, setViewings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [resubmittingApp, setResubmittingApp] = useState(false);
+  const [rescheduleNotes, setRescheduleNotes] = useState<Record<string, string>>({});
 
   const loadData = async () => {
     if (!user) return;
@@ -44,12 +47,15 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
     try {
       // Landlords see their own properties
       const propData = await api.getProperties({ ownerId: user.id });
-      // If none found for this newly registered user, also show if they matched any sample
       setProperties(propData.properties);
 
       // Inquiries for this landlord's listings
       const inqData = await api.getInquiries(user.id, 'landlord');
       setInquiries(inqData);
+
+      // Viewings for this landlord's listings
+      const viewData = await api.getViewings(user.id, 'landlord');
+      setViewings(viewData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -60,6 +66,32 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
   useEffect(() => {
     loadData();
   }, [user]);
+
+  const handleResubmitLandlord = async () => {
+    if (!user) return;
+    setResubmittingApp(true);
+    try {
+      const updated = await api.resubmitLandlordApplication(user.id);
+      localStorage.setItem('roomsnepal_current_user', JSON.stringify(updated));
+      showToast('Landlord application resubmitted! RoomsNepal administrators will re-evaluate your account.', 'info');
+      window.location.reload();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to resubmit application', 'error');
+    } finally {
+      setResubmittingApp(false);
+    }
+  };
+
+  const handleViewingStatusChange = async (viewingId: string, status: string, notes?: string) => {
+    if (!user) return;
+    try {
+      const updated = await api.updateViewingStatus(viewingId, status, notes, user.id);
+      setViewings(prev => prev.map(v => (v.id === viewingId ? updated : v)));
+      showToast(`Inspection visit marked as ${status}!`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update inspection visit status', 'error');
+    }
+  };
 
   const handleToggleStatus = async (prop: Property) => {
     if (!user) return;
@@ -142,6 +174,44 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
         </div>
       </div>
 
+      {/* Landlord Application Status Banner */}
+      {user?.role === 'landlord' && user.landlordStatus === 'pending' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5">
+          <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-1">
+            <h4 className="text-sm font-bold text-amber-900">
+              Landlord Application Under Review by RoomsNepal Staff
+            </h4>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              Your homeowner account application is currently pending administrator verification. RoomsNepal verifies homeowners to maintain zero-fraud standards. Once approved, your listings will be published immediately to public search.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {user?.role === 'landlord' && user.landlordStatus === 'rejected' && (
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-rose-900">
+                Landlord Application Requires Information Update
+              </h4>
+              <p className="text-xs text-rose-700 leading-relaxed">
+                Feedback from staff: <span className="font-semibold">"{user.landlordRejectionReason || 'Please verify your phone number and listing details.'}"</span>
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleResubmitLandlord}
+            disabled={resubmittingApp}
+            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shrink-0 transition-colors shadow-xs cursor-pointer disabled:opacity-60"
+          >
+            {resubmittingApp ? 'Submitting...' : 'Resubmit Application'}
+          </button>
+        </div>
+      )}
+
       {/* Metric Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
@@ -165,12 +235,13 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
-          <span className="text-xs font-medium text-slate-500 block">Verification Status</span>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span className="text-sm font-bold text-slate-900">Verified Landlord</span>
+          <span className="text-xs font-medium text-slate-500 block">Inspection Visits</span>
+          <div className="text-2xl font-extrabold text-slate-900 font-mono mt-1">
+            {viewings.length}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Contact: {user?.phone || 'Configured'}</div>
+          <div className="text-[11px] text-slate-400 mt-1">
+            {viewings.filter(v => v.status === 'pending').length} Awaiting Confirmation
+          </div>
         </div>
       </div>
 
@@ -198,6 +269,18 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
         >
           <MessageSquare className="w-4 h-4" />
           <span>Tenant Inquiries ({inquiries.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('viewings')}
+          className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+            activeTab === 'viewings'
+              ? 'border-slate-900 text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Calendar className="w-4 h-4 text-emerald-600" />
+          <span>Inspection Visits ({viewings.length})</span>
         </button>
       </div>
 
@@ -455,6 +538,145 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
 
                     <div className="text-[11px] text-slate-400">
                       Received {new Date(inq.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 3: Inspection Visits Content */}
+      {activeTab === 'viewings' && (
+        <div className="space-y-4">
+          {loading ? (
+            <div className="py-12 text-center text-xs text-slate-500">Loading inspection requests...</div>
+          ) : viewings.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">No Inspection Visits Requested Yet</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                When prospective tenants schedule physical in-person visits to view your room or flat in Nepal, their appointment times will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {viewings.map((vw) => (
+                <div
+                  key={vw.id}
+                  className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">{vw.tenantName}</span>
+                        <span
+                          className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
+                            vw.status === 'confirmed'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : vw.status === 'declined'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                              : vw.status === 'completed'
+                              ? 'bg-slate-100 text-slate-800'
+                              : 'bg-amber-100 text-amber-800 border border-amber-200'
+                          }`}
+                        >
+                          {vw.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Property: <span className="font-semibold text-slate-700">{vw.propertyTitle}</span> ({vw.propertyCity})
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {vw.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleViewingStatusChange(vw.id, 'confirmed')}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                          >
+                            Confirm Visit
+                          </button>
+                          <button
+                            onClick={() => {
+                              const note = prompt('Optional note / reschedule suggestion for tenant:');
+                              handleViewingStatusChange(vw.id, 'declined', note || undefined);
+                            }}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                          >
+                            Decline
+                          </button>
+                        </>
+                      )}
+                      {vw.status === 'confirmed' && (
+                        <button
+                          onClick={() => handleViewingStatusChange(vw.id, 'completed')}
+                          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                        >
+                          Mark Completed
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Visit Appointment Details */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-100 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">
+                        Requested Date
+                      </span>
+                      <span className="font-semibold text-slate-900 flex items-center gap-1.5 mt-0.5">
+                        <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                        {vw.preferredDate}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">
+                        Time Window (Nepal Time / NPT)
+                      </span>
+                      <span className="font-semibold text-slate-900 flex items-center gap-1.5 mt-0.5">
+                        <Clock className="w-3.5 h-3.5 text-emerald-700" />
+                        {vw.preferredTimeSlot}
+                      </span>
+                    </div>
+                  </div>
+
+                  {vw.notes && (
+                    <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+                      Tenant note: "{vw.notes}"
+                    </div>
+                  )}
+
+                  {vw.landlordNotes && (
+                    <div className="text-xs text-emerald-900 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                      Landlord note: "{vw.landlordNotes}"
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex items-center gap-1.5 font-mono font-medium text-slate-900">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                        <a href={`tel:${vw.tenantPhone}`} className="hover:underline">
+                          {vw.tenantPhone}
+                        </a>
+                      </div>
+                      {vw.tenantEmail && (
+                        <div className="flex items-center gap-1.5 text-slate-600">
+                          <Mail className="w-3.5 h-3.5 text-slate-400" />
+                          <a href={`mailto:${vw.tenantEmail}`} className="hover:underline">
+                            {vw.tenantEmail}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-[11px] text-slate-400">
+                      Requested {new Date(vw.createdAt).toLocaleDateString()}
                     </div>
                   </div>
                 </div>

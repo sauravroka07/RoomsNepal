@@ -55,6 +55,9 @@ export interface User {
   phone?: string;
   createdAt: string;
   status: 'active' | 'suspended';
+  landlordStatus?: 'pending' | 'approved' | 'rejected';
+  landlordRejectionReason?: string;
+  landlordApplicationDate?: string;
   passwordHash?: string;
   passwordSalt?: string;
 }
@@ -90,7 +93,7 @@ export interface Property {
   images: string[];
   coverPhotoIndex?: number;
   isAvailable: boolean;
-  status: 'available' | 'rented';
+  status: 'available' | 'rented' | 'suspended';
   approvalStatus: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
   isVerified: boolean;
@@ -117,6 +120,26 @@ export interface Inquiry {
   createdAt: string;
 }
 
+export interface ViewingRequest {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyCity: string;
+  propertyRent?: number;
+  landlordId: string;
+  tenantId: string;
+  tenantName: string;
+  tenantEmail: string;
+  tenantPhone: string;
+  preferredDate: string;
+  preferredTimeSlot: string;
+  notes?: string;
+  status: 'pending' | 'confirmed' | 'declined' | 'rescheduled';
+  landlordNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PropertyReport {
   id: string;
   propertyId: string;
@@ -136,6 +159,7 @@ export interface DatabaseSchema {
   users: User[];
   properties: Property[];
   inquiries: Inquiry[];
+  viewings: ViewingRequest[];
   reports: PropertyReport[];
   savedProperties: { userId: string; propertyId: string; savedAt: string }[];
   adminSetupCompleted?: boolean;
@@ -420,6 +444,7 @@ const INITIAL_USERS: User[] = [
     role: 'landlord',
     phone: '9766602378',
     status: 'active',
+    landlordStatus: 'approved',
     createdAt: '2026-10-02T10:00:00Z'
   }
 ];
@@ -430,6 +455,7 @@ function readDb(): DatabaseSchema {
       users: INITIAL_USERS,
       properties: INITIAL_PROPERTIES,
       inquiries: [],
+      viewings: [],
       reports: [],
       savedProperties: [
         { userId: 'demo-tenant-aarav', propertyId: 'prop-ktm-01', savedAt: '2026-10-06T12:00:00Z' }
@@ -443,7 +469,15 @@ function readDb(): DatabaseSchema {
     const raw = fs.readFileSync(DB_PATH, 'utf-8');
     const parsed: DatabaseSchema = JSON.parse(raw);
     if (!parsed.reports) parsed.reports = [];
+    if (!parsed.viewings) parsed.viewings = [];
     if (!parsed.properties) parsed.properties = INITIAL_PROPERTIES;
+
+    // Ensure demo landlord has landlordStatus: 'approved'
+    const demoLandlord = parsed.users.find(u => u.id === 'demo-landlord-bikash');
+    if (demoLandlord && !demoLandlord.landlordStatus) {
+      demoLandlord.landlordStatus = 'approved';
+    }
+
     // Ensure admin user exists with admin role
     const adminExists = parsed.users.find(u => u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
     if (!adminExists) {
@@ -458,6 +492,7 @@ function readDb(): DatabaseSchema {
       users: INITIAL_USERS,
       properties: INITIAL_PROPERTIES,
       inquiries: [],
+      viewings: [],
       reports: [],
       savedProperties: []
     };
@@ -499,8 +534,6 @@ app.get('/api/platform/info', (_req: Request, res: Response) => {
     appName: 'RoomsNepal',
     creator: 'Designed & Developed by Saurav Roka',
     supportEmail: 'sauravroka450@gmail.com',
-    supportPhone: '9766602378',
-    whatsappUrl: 'https://wa.me/9779766602378',
     country: 'Nepal'
   });
 });
@@ -617,15 +650,79 @@ app.get('/api/admin/stats', requireAdmin, (_req: Request, res: Response) => {
     totalUsers: db.users.length,
     landlordsCount: db.users.filter(u => u.role === 'landlord').length,
     tenantsCount: db.users.filter(u => u.role === 'tenant').length,
+    pendingLandlords: db.users.filter(u => u.role === 'landlord' && u.landlordStatus === 'pending').length,
+    approvedLandlords: db.users.filter(u => u.role === 'landlord' && u.landlordStatus === 'approved').length,
     totalProperties: db.properties.length,
     pendingProperties: db.properties.filter(p => p.approvalStatus === 'pending').length,
     approvedProperties: db.properties.filter(p => p.approvalStatus === 'approved').length,
     rejectedProperties: db.properties.filter(p => p.approvalStatus === 'rejected').length,
+    suspendedProperties: db.properties.filter(p => p.status === 'suspended').length,
     totalInquiries: db.inquiries.length,
+    totalViewings: (db.viewings || []).length,
     totalReports: db.reports.length,
     pendingReports: db.reports.filter(r => r.status === 'pending').length,
   };
   return res.json({ stats });
+});
+
+// Admin Landlord Applications Management
+app.get('/api/admin/landlords', requireAdmin, (_req: Request, res: Response) => {
+  const db = readDb();
+  const landlords = db.users
+    .filter(u => u.role === 'landlord')
+    .map(({ passwordHash, passwordSalt, ...u }) => ({
+      ...u,
+      propertiesCount: db.properties.filter(p => p.ownerId === u.id).length
+    }));
+  return res.json({ landlords });
+});
+
+app.patch('/api/admin/landlords/:id/approve', requireAdmin, (req: Request, res: Response) => {
+  const { id } = req.params;
+  const db = readDb();
+  const landlord = db.users.find(u => u.id === id && u.role === 'landlord');
+  if (!landlord) {
+    return res.status(404).json({ error: 'Landlord application not found' });
+  }
+
+  landlord.landlordStatus = 'approved';
+  landlord.landlordRejectionReason = undefined;
+  writeDb(db);
+  return res.json({ success: true, landlord });
+});
+
+app.patch('/api/admin/landlords/:id/reject', requireAdmin, (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { rejectionReason } = req.body;
+  if (!rejectionReason || !rejectionReason.trim()) {
+    return res.status(400).json({ error: 'Rejection reason is required' });
+  }
+  const db = readDb();
+  const landlord = db.users.find(u => u.id === id && u.role === 'landlord');
+  if (!landlord) {
+    return res.status(404).json({ error: 'Landlord application not found' });
+  }
+
+  landlord.landlordStatus = 'rejected';
+  landlord.landlordRejectionReason = rejectionReason.trim();
+  writeDb(db);
+  return res.json({ success: true, landlord });
+});
+
+// Landlord Application Resubmission
+app.patch('/api/landlords/:id/resubmit', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const db = readDb();
+  const landlord = db.users.find(u => u.id === id && u.role === 'landlord');
+  if (!landlord) {
+    return res.status(404).json({ error: 'Landlord account not found' });
+  }
+
+  landlord.landlordStatus = 'pending';
+  landlord.landlordRejectionReason = undefined;
+  landlord.landlordApplicationDate = new Date().toISOString();
+  writeDb(db);
+  return res.json({ success: true, landlord });
 });
 
 // Admin Properties Management
@@ -873,6 +970,8 @@ app.post('/api/auth/register', (req: Request, res: Response) => {
     role: role === 'landlord' ? 'landlord' : 'tenant',
     phone: phone?.trim() || '',
     status: 'active',
+    landlordStatus: role === 'landlord' ? 'pending' : undefined,
+    landlordApplicationDate: role === 'landlord' ? new Date().toISOString() : undefined,
     createdAt: new Date().toISOString()
   };
 
@@ -917,7 +1016,7 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
   return res.json({ user });
 });
 
-// Public Properties Listing (Only Approved Properties for Public)
+// Public Properties Listing (Only Approved Non-Sample Properties for Public)
 app.get('/api/properties', (req: Request, res: Response) => {
   const {
     city,
@@ -942,8 +1041,8 @@ app.get('/api/properties', (req: Request, res: Response) => {
   if (ownerId) {
     results = results.filter(p => p.ownerId === ownerId);
   } else {
-    // PUBLIC VIEW: Strictly approved properties only!
-    results = results.filter(p => p.approvalStatus === 'approved');
+    // PUBLIC VIEW: Strictly approved, available, non-sample listings only!
+    results = results.filter(p => p.approvalStatus === 'approved' && !p.isSample && p.status === 'available');
   }
 
   if (city && city !== 'all') {
@@ -984,9 +1083,9 @@ app.get('/api/properties', (req: Request, res: Response) => {
   }
 
   if (availability === 'available') {
-    results = results.filter(p => p.isAvailable);
+    results = results.filter(p => p.isAvailable && p.status === 'available');
   } else if (availability === 'rented') {
-    results = results.filter(p => !p.isAvailable);
+    results = results.filter(p => !p.isAvailable || p.status === 'rented');
   }
 
   if (search) {
@@ -1015,8 +1114,18 @@ app.get('/api/properties', (req: Request, res: Response) => {
   const total = results.length;
   const paginated = results.slice((pageNum - 1) * limitNum, pageNum * limitNum);
 
+  // Strip phone numbers from public results for contact privacy
+  const sanitized = paginated.map(p => {
+    if (ownerId && p.ownerId === ownerId) return p;
+    return {
+      ...p,
+      ownerPhone: '',
+      whatsappPhone: ''
+    };
+  });
+
   return res.json({
-    properties: paginated,
+    properties: sanitized,
     total,
     page: pageNum,
     totalPages: Math.ceil(total / limitNum)
@@ -1026,6 +1135,16 @@ app.get('/api/properties', (req: Request, res: Response) => {
 // Single Property Details
 app.get('/api/properties/:id', (req: Request, res: Response) => {
   const { requestUserId } = req.query;
+  const authHeader = req.headers.authorization;
+  let isAdmin = false;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '').trim();
+    const session = activeAdminSessions.get(token);
+    if (session && session.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      isAdmin = true;
+    }
+  }
+
   const db = readDb();
   const property = db.properties.find(p => p.id === req.params.id);
 
@@ -1033,12 +1152,24 @@ app.get('/api/properties/:id', (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Property not found' });
   }
 
-  // If not approved, only the owner can view
-  if (property.approvalStatus !== 'approved' && property.ownerId !== requestUserId) {
+  // Demonstration records are hidden from public searches and direct public URLs
+  if (property.isSample && !isAdmin && property.ownerId !== requestUserId) {
+    return res.status(404).json({ error: 'Property not found' });
+  }
+
+  // If not approved, only the owner or an admin can view
+  if (property.approvalStatus !== 'approved' && property.ownerId !== requestUserId && !isAdmin) {
     return res.status(403).json({ error: 'This property listing is currently under review by administrators.' });
   }
 
-  return res.json({ property });
+  // Sanitize landlord phone numbers for public visitors (inquiry form is required)
+  const safeProperty = { ...property };
+  if (property.ownerId !== requestUserId && !isAdmin) {
+    safeProperty.ownerPhone = '';
+    safeProperty.whatsappPhone = '';
+  }
+
+  return res.json({ property: safeProperty });
 });
 
 // Create Property (Landlords) - Starts with PENDING status
@@ -1050,17 +1181,25 @@ app.post('/api/properties', (req: Request, res: Response) => {
 
   const db = readDb();
   const user = db.users.find(u => u.id === data.ownerId);
-  if (user && user.status === 'suspended') {
+  if (!user) {
+    return res.status(401).json({ error: 'Owner account not found.' });
+  }
+  if (user.status === 'suspended') {
     return res.status(403).json({ error: 'Your account is suspended. You cannot create new listings.' });
+  }
+  if (user.role === 'landlord' && user.landlordStatus !== 'approved') {
+    return res.status(403).json({
+      error: 'Your landlord application is currently pending admin verification. You can publish properties once verified by RoomsNepal administrators.'
+    });
   }
 
   const newProperty: Property = {
     id: `prop-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
     ownerId: data.ownerId,
-    ownerName: data.ownerName || 'Property Owner',
-    ownerPhone: data.ownerPhone || '9766602378',
-    ownerEmail: data.ownerEmail || 'sauravroka450@gmail.com',
-    whatsappPhone: data.whatsappPhone || '9766602378',
+    ownerName: user.name || data.ownerName || 'Property Owner',
+    ownerPhone: user.phone || data.ownerPhone || '9766602378',
+    ownerEmail: user.email || data.ownerEmail || 'sauravroka450@gmail.com',
+    whatsappPhone: user.phone || data.whatsappPhone || '9766602378',
     title: data.title.trim(),
     description: data.description?.trim() || '',
     city: data.city,
@@ -1239,6 +1378,96 @@ app.patch('/api/inquiries/:id', (req: Request, res: Response) => {
   return res.json({ inquiry });
 });
 
+// Viewings Endpoints (Inspection Visits)
+app.get('/api/viewings', (req: Request, res: Response) => {
+  const { userId, role } = req.query;
+  const db = readDb();
+  if (!userId) {
+    return res.json({ viewings: [] });
+  }
+
+  let userViewings: ViewingRequest[] = [];
+  if (role === 'landlord') {
+    userViewings = (db.viewings || []).filter(v => v.landlordId === userId);
+  } else {
+    userViewings = (db.viewings || []).filter(v => v.tenantId === userId);
+  }
+
+  userViewings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return res.json({ viewings: userViewings });
+});
+
+app.post('/api/viewings', (req: Request, res: Response) => {
+  const {
+    propertyId,
+    tenantId,
+    tenantName,
+    tenantEmail,
+    tenantPhone,
+    preferredDate,
+    preferredTimeSlot,
+    notes
+  } = req.body;
+
+  if (!propertyId || !tenantName || !tenantPhone || !preferredDate || !preferredTimeSlot) {
+    return res.status(400).json({ error: 'Property ID, name, phone, date, and preferred time slot are required' });
+  }
+
+  const db = readDb();
+  const property = db.properties.find(p => p.id === propertyId);
+  if (!property) {
+    return res.status(404).json({ error: 'Property not found' });
+  }
+
+  const newViewing: ViewingRequest = {
+    id: `vw-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    propertyId,
+    propertyTitle: property.title,
+    propertyCity: property.city,
+    propertyRent: property.monthlyRentNPR,
+    landlordId: property.ownerId,
+    tenantId: tenantId || 'guest-tenant',
+    tenantName: tenantName.trim(),
+    tenantEmail: tenantEmail?.trim() || '',
+    tenantPhone: tenantPhone.trim(),
+    preferredDate: preferredDate.trim(),
+    preferredTimeSlot: preferredTimeSlot.trim(),
+    notes: notes?.trim() || '',
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (!db.viewings) db.viewings = [];
+  db.viewings.unshift(newViewing);
+  writeDb(db);
+
+  return res.status(201).json({ viewing: newViewing });
+});
+
+app.patch('/api/viewings/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status, landlordNotes, requestUserId } = req.body;
+  const db = readDb();
+  if (!db.viewings) db.viewings = [];
+  const viewing = db.viewings.find(v => v.id === id);
+
+  if (!viewing) {
+    return res.status(404).json({ error: 'Inspection viewing request not found' });
+  }
+
+  if (requestUserId && viewing.landlordId !== requestUserId) {
+    return res.status(403).json({ error: 'Unauthorized: Only the property owner can update inspection viewing requests' });
+  }
+
+  if (status) viewing.status = status;
+  if (landlordNotes !== undefined) viewing.landlordNotes = landlordNotes;
+  viewing.updatedAt = new Date().toISOString();
+
+  writeDb(db);
+  return res.json({ viewing });
+});
+
 // Saved Properties
 app.get('/api/saved', (req: Request, res: Response) => {
   const { userId } = req.query;
@@ -1251,7 +1480,7 @@ app.get('/api/saved', (req: Request, res: Response) => {
     .filter(s => s.userId === userId)
     .map(s => s.propertyId);
 
-  const properties = db.properties.filter(p => savedIds.includes(p.id));
+  const properties = db.properties.filter(p => savedIds.includes(p.id) && !p.isSample && p.approvalStatus === 'approved');
   return res.json({ properties, savedIds });
 });
 
@@ -1302,6 +1531,18 @@ app.post('/api/ai/chat', async (req: Request, res: Response) => {
     const { message, history, currentPropertyId, userRole } = req.body;
     if (!message || typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'Message is required' });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.json({
+        configured: false,
+        reply: "Namaste! Sathi AI is currently not configured yet because GEMINI_API_KEY has not been set in the server environment. Once GEMINI_API_KEY is configured, Sathi AI will assist you with live rates, rental advice, and inspection tips across Nepal.",
+        suggestedQueries: [
+          'Rooms near New Baneshwor',
+          'Average 1BHK rent in Lalitpur',
+          'Sub-meter electricity rates in Nepal'
+        ]
+      });
     }
 
     const db = readDb();
@@ -1412,6 +1653,17 @@ Guidelines:
 app.post('/api/ai/enhance-listing', async (req: Request, res: Response) => {
   try {
     const { title, neighborhood, city, propertyType, furnished, bedrooms, bathrooms, currentDescription, monthlyRentNPR, amenities } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.json({
+        configured: false,
+        enhancedTitle: `${propertyType || 'Room'} in ${neighborhood || city}, ${city}`,
+        enhancedDescription: currentDescription || `Spacious and well-ventilated ${propertyType || 'space'} located in the peaceful neighborhood of ${neighborhood || city}, ${city}. Convenient access to public transport, local markets, and clean water supply.`,
+        suggestedRentNPR: monthlyRentNPR || 12000,
+        rentRationale: `Standard competitive market rate for ${propertyType || 'room/flat'} in ${neighborhood || city}, ${city}. (Note: Full AI analysis requires GEMINI_API_KEY to be configured).`,
+        recommendedAmenities: ['Motorbike Parking', 'Separate Sub-meter', '24/7 Water Supply', 'Terrace Access']
+      });
+    }
 
     const prompt = `You are a real estate listing specialist in Nepal. A landlord is posting a room or flat on RoomsNepal.
 Input Details:

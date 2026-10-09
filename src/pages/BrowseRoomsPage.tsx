@@ -205,10 +205,12 @@ export const BrowseRoomsPage: React.FC<BrowseRoomsPageProps> = ({
                 <Building2 className="w-6 h-6" />
               </div>
               <h3 className="text-base font-bold text-slate-900">
-                No matching rooms found
+                No properties available yet. Check back soon as landlords add their listings.
               </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                We couldn't find any listings matching your specific combination of filters. Try widening your price range, choosing "All Cities", or clearing keyword search.
+                {totalCount === 0
+                  ? "RoomsNepal strictly features genuine, administrator-approved property listings. Check back soon as verified homeowners publish new rooms and flats."
+                  : "We couldn't find any listings matching your specific combination of filters. Try widening your price range, choosing 'All Cities', or clearing keyword search."}
               </p>
               <button
                 onClick={handleResetFilters}

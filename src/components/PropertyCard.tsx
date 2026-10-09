@@ -19,7 +19,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onSelect }
   };
 
   const formattedPrice = new Intl.NumberFormat('en-IN').format(property.monthlyRentNPR);
-  const hasValidPhoto = Boolean(property.images && property.images.length > 0 && property.images[0] && !imageFailed);
+  const coverPhoto = property.images && property.images.length > 0
+    ? (property.images[property.coverPhotoIndex || 0] || property.images[0])
+    : null;
+  const hasValidPhoto = Boolean(coverPhoto && !imageFailed);
 
   return (
     <article
@@ -28,9 +31,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onSelect }
     >
       {/* Property Image Container */}
       <div className="relative aspect-4/3 w-full bg-slate-100 overflow-hidden">
-        {hasValidPhoto ? (
+        {hasValidPhoto && coverPhoto ? (
           <img
-            src={property.images[0]}
+            src={coverPhoto}
             alt={property.title}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"

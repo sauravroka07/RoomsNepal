@@ -123,41 +123,31 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenStaffAuth }) =
             </h4>
             <div className="space-y-2.5 text-sm text-slate-400">
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
-                <a href="tel:9766602378" className="hover:text-white transition-colors font-mono">
-                  9766602378
-                </a>
-              </div>
-
-              {/* WhatsApp Option (Nepal Format) */}
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                <a
-                  href="https://wa.me/9779766602378"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium flex items-center gap-1"
-                >
-                  <span>WhatsApp (+977 9766602378)</span>
-                </a>
-              </div>
-
-              <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-emerald-500 shrink-0" />
                 <a href="mailto:sauravroka450@gmail.com" className="hover:text-white transition-colors text-xs truncate">
                   sauravroka450@gmail.com
                 </a>
               </div>
-
-              <div className="pt-2">
-                <button
-                  onClick={onOpenStaffAuth}
-                  className="text-xs font-medium text-slate-500 hover:text-purple-400 transition-colors flex items-center gap-1"
-                >
-                  <Shield className="w-3.5 h-3.5" />
-                  <span>Staff / Admin Sign In</span>
-                </button>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
+                <a href="tel:9766602378" className="hover:text-white transition-colors text-xs font-mono">
+                  9766602378
+                </a>
               </div>
+              <div className="pt-1.5">
+                <a
+                  href="https://wa.me/9779766602378?text=Hello%20RoomsNepal%2C%20I%20need%20assistance."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 text-xs font-semibold transition-all shadow-xs"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Chat on WhatsApp</span>
+                </a>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed pt-1">
+                Have questions or need assistance? Reach out to our dedicated support desk.
+              </p>
             </div>
           </div>
         </div>

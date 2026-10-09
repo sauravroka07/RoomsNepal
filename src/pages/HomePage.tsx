@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Sparkles, Shield, ArrowRight, PlusCircle, CheckCircle2 } from 'lucide-react';
+import { Search, MapPin, Sparkles, Shield, ArrowRight, PlusCircle, CheckCircle2, Building2 } from 'lucide-react';
 import { Property, FilterState } from '../types';
 import { PropertyCard } from '../components/PropertyCard';
 import { useAuth } from '../context/AuthContext';
@@ -37,26 +37,22 @@ export const HomePage: React.FC<HomePageProps> = ({
     {
       city: 'Kathmandu',
       subtitle: 'New Baneshwor, Thamel, Koteshwor, Baluwatar',
-      count: '140+ Listings',
-      image: '/images/listing_room_baneshwor.jpg',
+      tag: 'Capital Valley',
     },
     {
       city: 'Lalitpur',
       subtitle: 'Jhamsikhel, Kupondole, Sanepa, Pulchowk',
-      count: '85+ Listings',
-      image: '/images/listing_flat_lalitpur.jpg',
+      tag: 'Historic & Modern Hub',
     },
     {
       city: 'Pokhara',
       subtitle: 'Lakeside, Zero KM, Prithvi Chowk, Nadipur',
-      count: '60+ Listings',
-      image: '/images/listing_room_pokhara.jpg',
+      tag: 'Lake & Mountain Valley',
     },
     {
       city: 'Bhaktapur',
       subtitle: 'Suryabinayak, Sallaghari, Thimi, Kamalbinayak',
-      count: '35+ Listings',
-      image: '/images/hero_rooms_nepal.jpg',
+      tag: 'Cultural Heritage Valley',
     },
   ];
 
@@ -215,22 +211,19 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div
               key={loc.city}
               onClick={() => onNavigateBrowse({ city: loc.city })}
-              className="group relative h-48 rounded-2xl overflow-hidden cursor-pointer border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200"
+              className="group relative h-36 rounded-2xl overflow-hidden cursor-pointer bg-slate-900 border border-slate-800 shadow-xs hover:border-emerald-500/50 hover:shadow-md transition-all duration-200 p-5 flex flex-col justify-between"
             >
-              <img
-                src={loc.image}
-                alt={loc.city}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4 text-white">
-                <span className="text-[11px] font-semibold text-emerald-300 block">
-                  {loc.count}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-emerald-400">
+                  {loc.tag}
                 </span>
-                <h3 className="text-lg font-bold leading-tight group-hover:text-emerald-300 transition-colors">
+                <MapPin className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
                   {loc.city}
                 </h3>
-                <p className="text-[11px] text-slate-300 truncate mt-0.5">
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">
                   {loc.subtitle}
                 </p>
               </div>
@@ -254,20 +247,42 @@ export const HomePage: React.FC<HomePageProps> = ({
             onClick={() => onNavigateBrowse()}
             className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center gap-1"
           >
-            <span>Explore All {featuredProperties.length} Listings</span>
+            <span>Explore All Listings</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredProperties.slice(0, 6).map((property) => (
-            <PropertyCard
-              key={property.id}
-              property={property}
-              onSelect={onSelectProperty}
-            />
-          ))}
-        </div>
+        {featuredProperties.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center space-y-4 max-w-2xl mx-auto shadow-2xs">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">
+              No properties available yet. Check back soon as landlords add their listings.
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+              RoomsNepal strictly requires administrator verification of genuine homeowner submissions before listings are published to the public.
+            </p>
+            <div className="pt-2">
+              <button
+                onClick={onOpenAddListing}
+                className="px-5 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                Are you a homeowner? List your property free
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredProperties.slice(0, 6).map((property) => (
+              <PropertyCard
+                key={property.id}
+                property={property}
+                onSelect={onSelectProperty}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* How RoomsNepal Works */}
@@ -302,7 +317,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
               <h3 className="text-base font-bold text-white">Direct Owner Connection</h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Send an inquiry directly to the landlord or chat via phone to schedule an in-person room visit without any broker commission.
+                Send an inquiry directly to the landlord or schedule an in-person inspection visit without any broker commission.
               </p>
             </div>
 
@@ -338,7 +353,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 100% Free Listing
               </span>
               <span className="flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Direct Phone Inquiries
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Direct Tenant Inquiries & Visits
               </span>
               <span className="flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Toggle Available / Rented
