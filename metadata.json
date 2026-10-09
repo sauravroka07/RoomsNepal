@@ -1,0 +1,6 @@
+{
+  "name": "RoomsNepal - Room & Flat Rental Nepal",
+  "description": "Find and rent verified rooms, flats, and apartments across Kathmandu, Pokhara, Lalitpur, and Bhaktapur.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
