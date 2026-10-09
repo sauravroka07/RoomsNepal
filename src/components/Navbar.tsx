@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Bookmark, PlusCircle, User, LogOut, Menu, X, ShieldCheck } from 'lucide-react';
+import { Hop as Home, Bookmark, CirclePlus as PlusCircle, User, LogOut, Menu, X, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
@@ -119,6 +119,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Admin Portal</span>
               </button>
             )}
+            {!isAdmin && (
+              <button
+                onClick={() => onNavigate('staff-login')}
+                className={`hover:text-slate-900 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 text-slate-500 ${
+                  currentView === 'staff-login' ? 'text-slate-900 font-semibold' : ''
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Staff Login</span>
+              </button>
+            )}
           </nav>
 
           {/* Zone 3: Primary Action */}
@@ -209,6 +220,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
 
+            {!isAdmin && !user && (
+              <button
+                onClick={() => onNavigate('staff-login')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border rounded-lg transition-colors whitespace-nowrap ${
+                  currentView === 'staff-login'
+                    ? 'border-slate-900 text-slate-900 bg-slate-50'
+                    : 'border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-800'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Staff</span>
+              </button>
+            )}
             <button
               onClick={handleListPropertyClick}
               className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors whitespace-nowrap"
@@ -261,6 +285,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             {user ? (
               <>
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      onNavigate('admin-dashboard');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-left py-2 text-sm font-semibold text-purple-700 flex items-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    Admin Dashboard
+                  </button>
+                )}
                 {user.role === 'landlord' ? (
                   <button
                     onClick={() => {
@@ -271,7 +307,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     Landlord Dashboard
                   </button>
-                ) : (
+                ) : user.role === 'tenant' ? (
                   <button
                     onClick={() => {
                       onNavigate('tenant-dashboard');
@@ -281,7 +317,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     Tenant Dashboard ({savedPropertyIds.length} Saved)
                   </button>
-                )}
+                ) : null}
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                   <div className="text-xs text-slate-600">
                     Signed in as <span className="font-semibold text-slate-900">{user.name}</span>
@@ -298,24 +334,36 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               </>
             ) : (
-              <div className="pt-2 border-t border-slate-100 flex gap-2">
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      onOpenAuth('login');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex-1 py-2 text-center text-xs font-semibold text-slate-800 border border-slate-300 rounded-lg"
+                  >
+                    Log In
+                  </button>
+                  <button
+                    onClick={() => {
+                      onOpenAuth('register');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex-1 py-2 text-center text-xs font-semibold text-white bg-emerald-700 rounded-lg"
+                  >
+                    Sign Up
+                  </button>
+                </div>
                 <button
                   onClick={() => {
-                    onOpenAuth('login');
+                    onNavigate('staff-login');
                     setMobileMenuOpen(false);
                   }}
-                  className="flex-1 py-2 text-center text-xs font-semibold text-slate-800 border border-slate-300 rounded-lg"
+                  className="w-full py-2 text-center text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg flex items-center justify-center gap-1.5"
                 >
-                  Log In
-                </button>
-                <button
-                  onClick={() => {
-                    onOpenAuth('register');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex-1 py-2 text-center text-xs font-semibold text-white bg-emerald-700 rounded-lg"
-                >
-                  Sign Up
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Staff Login
                 </button>
               </div>
             )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Home, Mail, Lock, Phone, ArrowRight, ShieldCheck, Shield } from 'lucide-react';
+import { X, User, Hop as Home, Mail, Lock, Phone, ArrowRight, ShieldCheck, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { api } from '../services/api';
@@ -298,24 +298,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          {/* Password */}
-          {mode !== 'forgot' && (
+          {/* Password — only for admin portal; tenant/landlord login is email-only */}
+          {mode === 'admin' && (
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-semibold text-slate-700">
-                  {mode === 'admin'
-                    ? adminNeedsSetup ? 'Create Administrator Password (min 6 chars) *' : 'Staff Administrator Password *'
-                    : 'Password *'}
+                  {adminNeedsSetup ? 'Create Administrator Password (min 6 chars) *' : 'Staff Administrator Password *'}
                 </label>
-                {mode === 'login' && (
-                  <button
-                    type="button"
-                    onClick={() => switchMode('forgot')}
-                    className="text-[11px] text-emerald-700 hover:underline"
-                  >
-                    Forgot password?
-                  </button>
-                )}
               </div>
               <div className="relative">
                 <input
@@ -328,11 +317,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 />
                 <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3" />
               </div>
-              {mode === 'admin' && !adminNeedsSetup && (
+              {!adminNeedsSetup && (
                 <p className="text-[10px] text-slate-500 mt-1">
                   Protected server authentication token will be granted upon verification.
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Info notice for email-only login */}
+          {(mode === 'login' || mode === 'register') && (
+            <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-800 flex items-start gap-2">
+              <span className="mt-0.5">&#9432;</span>
+              <span>
+                {mode === 'login'
+                  ? 'RoomsNepal uses secure email-based sign-in. Enter your registered email to continue.'
+                  : 'Registration is free and instant. Just your name and email to get started.'}
+              </span>
             </div>
           )}
 
