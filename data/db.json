@@ -7,7 +7,9 @@
       "role": "admin",
       "phone": "9766602378",
       "status": "active",
-      "createdAt": "2026-10-01T00:00:00Z"
+      "createdAt": "2026-10-01T00:00:00Z",
+      "passwordHash": "8309c7d23e55e7a5965029d11fc6c823cf9e7c24e8a7cd60690fc6aa3925756c6180fb64565248229afe7507c195956deb9b6647821182d581d3ee0766b04f51",
+      "passwordSalt": "73db2ad4b82f7924e6774d7d4ef3a660"
     },
     {
       "id": "demo-tenant-aarav",
