@@ -1,0 +1,322 @@
+{
+  "users": [
+    {
+      "id": "admin-saurav-roka",
+      "name": "Saurav Roka",
+      "email": "sauravroka450@gmail.com",
+      "role": "admin",
+      "phone": "9766602378",
+      "status": "active",
+      "createdAt": "2026-10-01T00:00:00Z"
+    },
+    {
+      "id": "demo-tenant-aarav",
+      "name": "Aarav Sharma",
+      "email": "tenant@roomsnepal.com",
+      "role": "tenant",
+      "phone": "9766602378",
+      "status": "active",
+      "createdAt": "2026-10-02T10:00:00Z"
+    },
+    {
+      "id": "demo-landlord-bikash",
+      "name": "Bikash KC",
+      "email": "landlord@roomsnepal.com",
+      "role": "landlord",
+      "phone": "9766602378",
+      "status": "active",
+      "createdAt": "2026-10-02T10:00:00Z"
+    }
+  ],
+  "properties": [
+    {
+      "id": "prop-ktm-01",
+      "ownerId": "landlord-ram-shrestha",
+      "ownerName": "Ram Kumar Shrestha",
+      "ownerPhone": "9766602378",
+      "ownerEmail": "sauravroka450@gmail.com",
+      "whatsappPhone": "9766602378",
+      "title": "Sunny Studio Room with Private Balcony in New Baneshwor",
+      "description": "Bright and airy furnished studio room located on the 3rd floor in a quiet residential alley near Baneshwor Chowk and Civil Hospital. Equipped with comfortable double bed, study table, fast fiber internet, and 24/7 Melamchi + boring water supply. Perfect for students or working professionals.",
+      "city": "Kathmandu",
+      "neighborhood": "New Baneshwor",
+      "fullAddress": "Devkota Sadak, New Baneshwor, Kathmandu, Nepal",
+      "location": {
+        "lat": 27.6915,
+        "lng": 85.342
+      },
+      "propertyType": "Studio",
+      "furnished": "Furnished",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "floor": "3rd Floor",
+      "monthlyRentNPR": 14000,
+      "securityDepositNPR": 14000,
+      "waterSupply": "Melamchi + Groundwater (24/7 Supply)",
+      "electricity": "Sub-meter installed (Rs. 14 / unit)",
+      "amenities": [
+        "24/7 Water Supply",
+        "High-Speed Wi-Fi",
+        "Private Balcony",
+        "Solar Hot Water",
+        "Bike Parking",
+        "Terrace Access",
+        "Attached Bathroom",
+        "Kitchen Slab & Sink"
+      ],
+      "images": [
+        "/images/listing_room_baneshwor.jpg"
+      ],
+      "coverPhotoIndex": 0,
+      "isAvailable": true,
+      "status": "available",
+      "approvalStatus": "approved",
+      "isVerified": false,
+      "isSample": true,
+      "availableFrom": "2026-10-15",
+      "createdAt": "2026-10-01T10:00:00Z",
+      "updatedAt": "2026-10-01T10:00:00Z"
+    },
+    {
+      "id": "prop-lal-02",
+      "ownerId": "landlord-sita-adhikari",
+      "ownerName": "Sita Adhikari",
+      "ownerPhone": "9766602378",
+      "ownerEmail": "sauravroka450@gmail.com",
+      "whatsappPhone": "9766602378",
+      "title": "Spacious 2BHK Modern Flat with Balcony in Jhamsikhel",
+      "description": "Premium 2 bedroom flat in peaceful diplomatic enclave of Jhamsikhel, Lalitpur. High ceiling living room, modern modular kitchen with chimney, large double-glazed windows, and full sunlight throughout winter. Designated car & bike parking with security gate.",
+      "city": "Lalitpur",
+      "neighborhood": "Jhamsikhel",
+      "fullAddress": "Jhamsikhel Road, Ward 3, Lalitpur, Nepal",
+      "location": {
+        "lat": 27.674,
+        "lng": 85.312
+      },
+      "propertyType": "2BHK Flat",
+      "furnished": "Furnished",
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "floor": "2nd Floor",
+      "monthlyRentNPR": 42000,
+      "securityDepositNPR": 80000,
+      "waterSupply": "Deep boring + filter plant (Uninterrupted)",
+      "electricity": "Dedicated Meter + Inverter Backup",
+      "amenities": [
+        "24/7 Water Supply",
+        "Car & Bike Parking",
+        "Solar & Geyser Hot Water",
+        "Modular Kitchen",
+        "Inverter Power Backup",
+        "High-Speed Wi-Fi",
+        "Washing Machine Point",
+        "Gated Community"
+      ],
+      "images": [
+        "/images/listing_flat_lalitpur.jpg"
+      ],
+      "coverPhotoIndex": 0,
+      "isAvailable": true,
+      "status": "available",
+      "approvalStatus": "approved",
+      "isVerified": false,
+      "isSample": true,
+      "availableFrom": "Immediate",
+      "createdAt": "2026-10-03T09:00:00Z",
+      "updatedAt": "2026-10-03T09:00:00Z"
+    },
+    {
+      "id": "prop-pkr-03",
+      "ownerId": "landlord-kiran-gurung",
+      "ownerName": "Kiran Gurung",
+      "ownerPhone": "9766602378",
+      "ownerEmail": "sauravroka450@gmail.com",
+      "whatsappPhone": "9766602378",
+      "title": "Scenic Mountain-View Room with Balcony in Lakeside Pokhara",
+      "description": "Charming private room with wooden floor and private veranda overlooking tranquil gardens with direct sightline to Machhapuchhre and Annapurna range. Just 5 minutes walk to Phewa Lake. Peace, mountain breeze, attached clean modern bathroom.",
+      "city": "Pokhara",
+      "neighborhood": "Lakeside Center",
+      "fullAddress": "Baidam, Lakeside Ward 6, Pokhara, Nepal",
+      "location": {
+        "lat": 28.2096,
+        "lng": 83.9585
+      },
+      "propertyType": "Single Room",
+      "furnished": "Furnished",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "floor": "1st Floor",
+      "monthlyRentNPR": 18500,
+      "securityDepositNPR": 18500,
+      "waterSupply": "24/7 Municipal & Spring Water",
+      "electricity": "Sub-meter, Solar Inverter",
+      "amenities": [
+        "24/7 Water Supply",
+        "Private Veranda",
+        "Mountain View",
+        "High-Speed Wi-Fi",
+        "Solar Hot Water",
+        "Attached Bathroom",
+        "Shared Garden",
+        "Bike Parking"
+      ],
+      "images": [
+        "/images/listing_room_pokhara.jpg"
+      ],
+      "coverPhotoIndex": 0,
+      "isAvailable": true,
+      "status": "available",
+      "approvalStatus": "approved",
+      "isVerified": false,
+      "isSample": true,
+      "availableFrom": "Immediate",
+      "createdAt": "2026-10-04T14:30:00Z",
+      "updatedAt": "2026-10-04T14:30:00Z"
+    },
+    {
+      "id": "prop-ktm-04",
+      "ownerId": "landlord-ram-shrestha",
+      "ownerName": "Ram Kumar Shrestha",
+      "ownerPhone": "9766602378",
+      "ownerEmail": "sauravroka450@gmail.com",
+      "whatsappPhone": "9766602378",
+      "title": "Clean Student Single Room near Ring Road, Koteshwor",
+      "description": "Affordable sunny single room with wooden bed, study table, and bookshelf. Quiet residential area near Koteshwor Chowk with excellent bus connectivity. Clean drinking water, rooftop access, and separate sub-meter electricity.",
+      "city": "Kathmandu",
+      "neighborhood": "Koteshwor",
+      "fullAddress": "Subidhanagar, Koteshwor, Kathmandu, Nepal",
+      "location": {
+        "lat": 27.6755,
+        "lng": 85.3458
+      },
+      "propertyType": "Single Room",
+      "furnished": "Semi-Furnished",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "floor": "2nd Floor",
+      "monthlyRentNPR": 8500,
+      "securityDepositNPR": 8500,
+      "waterSupply": "Well + City Water (Regular timing)",
+      "electricity": "Sub-meter (Standard rate)",
+      "amenities": [
+        "24/7 Water Supply",
+        "Study Table & Chair",
+        "Terrace Access",
+        "Bike Parking",
+        "Separate Sub-Meter"
+      ],
+      "images": [
+        "/images/listing_room_koteshwor.jpg"
+      ],
+      "coverPhotoIndex": 0,
+      "isAvailable": true,
+      "status": "available",
+      "approvalStatus": "approved",
+      "isVerified": false,
+      "isSample": true,
+      "availableFrom": "Immediate",
+      "createdAt": "2026-10-05T11:00:00Z",
+      "updatedAt": "2026-10-05T11:00:00Z"
+    },
+    {
+      "id": "prop-bkt-05",
+      "ownerId": "landlord-bhim-tamang",
+      "ownerName": "Bhim Tamang",
+      "ownerPhone": "9766602378",
+      "ownerEmail": "sauravroka450@gmail.com",
+      "whatsappPhone": "9766602378",
+      "title": "Peaceful 2BHK Upper Floor Flat in Suryabinayak Bhaktapur",
+      "description": "Traditional Nepali residential flat with 2 sunny bedrooms, wooden ceiling beams, and a private terrace overlooking scenic Bhaktapur hills. Clean mountain air, quiet colony, 5 minutes to Arniko Highway.",
+      "city": "Bhaktapur",
+      "neighborhood": "Suryabinayak",
+      "fullAddress": "Ward 5, Suryabinayak, Bhaktapur, Nepal",
+      "location": {
+        "lat": 27.671,
+        "lng": 85.428
+      },
+      "propertyType": "2BHK Flat",
+      "furnished": "Semi-Furnished",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "floor": "Top Floor (3rd)",
+      "monthlyRentNPR": 16000,
+      "securityDepositNPR": 16000,
+      "waterSupply": "Natural spring boring + reserve tanks",
+      "electricity": "Independent sub-meter",
+      "amenities": [
+        "Rooftop Terrace",
+        "Bike Parking",
+        "24/7 Water Supply",
+        "Mountain & Valley View",
+        "Peaceful Environment"
+      ],
+      "images": [
+        "/images/listing_flat_bhaktapur.jpg"
+      ],
+      "coverPhotoIndex": 0,
+      "isAvailable": true,
+      "status": "available",
+      "approvalStatus": "approved",
+      "isVerified": false,
+      "isSample": true,
+      "availableFrom": "Immediate",
+      "createdAt": "2026-10-06T08:15:00Z",
+      "updatedAt": "2026-10-06T08:15:00Z"
+    },
+    {
+      "id": "prop-lal-06",
+      "ownerId": "landlord-sita-adhikari",
+      "ownerName": "Sita Adhikari",
+      "ownerPhone": "9766602378",
+      "ownerEmail": "sauravroka450@gmail.com",
+      "whatsappPhone": "9766602378",
+      "title": "Cozy Room for Student/Jobholder near Pulchowk, Kupondole",
+      "description": "Neat single room close to Pulchowk Engineering Campus, Patan Dhoka, and UN House. Clean shared western bathroom, high-speed WiFi, solar water heater for winter, and bike parking inside locked compound.",
+      "city": "Lalitpur",
+      "neighborhood": "Kupondole",
+      "fullAddress": "Kupondole Height, Lalitpur, Nepal",
+      "location": {
+        "lat": 27.686,
+        "lng": 85.3175
+      },
+      "propertyType": "Single Room",
+      "furnished": "Furnished",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "floor": "1st Floor",
+      "monthlyRentNPR": 9500,
+      "securityDepositNPR": 9500,
+      "waterSupply": "24/7 Filtered Water",
+      "electricity": "Sub-meter",
+      "amenities": [
+        "24/7 Water Supply",
+        "High-Speed Wi-Fi",
+        "Solar Hot Water",
+        "Bike Parking",
+        "Near Pulchowk Campus"
+      ],
+      "images": [
+        "/images/listing_room_kupondole.jpg"
+      ],
+      "coverPhotoIndex": 0,
+      "isAvailable": true,
+      "status": "available",
+      "approvalStatus": "approved",
+      "isVerified": false,
+      "isSample": true,
+      "availableFrom": "Immediate",
+      "createdAt": "2026-10-06T12:00:00Z",
+      "updatedAt": "2026-10-06T12:00:00Z"
+    }
+  ],
+  "inquiries": [],
+  "reports": [],
+  "savedProperties": [
+    {
+      "userId": "demo-tenant-aarav",
+      "propertyId": "prop-ktm-01",
+      "savedAt": "2026-10-06T12:00:00Z"
+    }
+  ],
+  "adminSetupCompleted": true
+}
